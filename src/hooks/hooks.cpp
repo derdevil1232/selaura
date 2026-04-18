@@ -19,6 +19,10 @@ SafetyHookInline ClientInstance_$ctor_hk;
 SafetyHookInline ScreenView_setupAndRender_hk;
 SafetyHookInline LevelRenderer_renderLevel_hk;
 
+namespace {
+    bool gIsOnDeathScreen = false;
+}
+
 Minecraft *Minecraft::$ctor(void *app, void *gameCallbacks, void *allowList, void *permissionsFile,
                             void *filePathManager, void *maxPlayerIdleTime, void *eventing, void *network,
                             void *packetSender, void *clientSubId, void *simTimer, void *realTimer,
@@ -45,6 +49,20 @@ void *ClientInstance::$ctor(void *a1, void *a2, void *a3, void *a4, void *a5, vo
 }
 
 void ScreenView::setupAndRender_hk(MinecraftUIRenderContext *ctx) {
+    if (Selaura::RuntimeInstance->mClientCtx->mClientInstance != nullptr) {
+        const bool isDeathScreen = Selaura::RuntimeInstance->mClientCtx->mClientInstance->isDeathScreen();
+        if (isDeathScreen && !gIsOnDeathScreen) {
+            Selaura::PlayerDeathEvent deathEvent{};
+            deathEvent.mClientInstance = Selaura::RuntimeInstance->mClientCtx->mClientInstance;
+            deathEvent.mScreenView = this;
+            Selaura::RuntimeInstance->mEventManager->post(deathEvent);
+        }
+
+        gIsOnDeathScreen = isDeathScreen;
+    } else {
+        gIsOnDeathScreen = false;
+    }
+
     Selaura::SetupAndRenderEvent<Selaura::EventPhase::Pre> before_ev{};
     before_ev.mScreenView = this;
     before_ev.mCtx = ctx;
@@ -79,10 +97,11 @@ void Selaura::InitHooks() {
         abi::mpf_to_fn(&Minecraft::$ctor)
     );
 
-    // ClientInstance_$ctor_hk = safetyhook::create_inline(
-    //     find_signature<"48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 49 8B F9 49 8B D8 4C 8B E2">(),
-    //     abi::mpf_to_fn(&ClientInstance::$ctor)
-    // );
+    ClientInstance_$ctor_hk = safetyhook::create_inline(
+        // Required so runtime keeps the active ClientInstance pointer used by death-screen detection.
+        FindSignature<"48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 49 8B F9 49 8B D8 4C 8B E2">(),
+        abi::mpf_to_fn(&ClientInstance::$ctor)
+    );
 
     ScreenView_setupAndRender_hk = safetyhook::create_inline(
         FindSignature<"48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 0F 29 BC 24 ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 4C 8B FA">(),
