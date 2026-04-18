@@ -11,6 +11,17 @@ Selaura Client
 
 This repository contains the full source code for Selaura Client. Selaura Client is a mod that aims to improve user experience of Minecraft: Bedrock Edition.
 
+## 🔌 Runtime event example: auto-respawn
+
+Selaura runtime now emits a `PlayerDeathEvent` when the local client transitions onto the death screen.
+
+- The event is posted from the existing `ScreenView::setupAndRender` hook path.
+- Emission is one-shot per death-screen entry (it does not fire every frame while dead).
+- A sample auto-respawn flow is shown in `test/main.cpp`, which subscribes to `PlayerDeathEvent` and triggers respawn input after a short delay.
+
+Current assumption:
+- The sample auto-respawn behavior runs on the game/client hook thread and sends the respawn input only while `death_screen` is still active.
+
 ## 🖥️ Compatibility
 Selaura Client aims to support:
 - Windows 10/11 (64-bit Only)
