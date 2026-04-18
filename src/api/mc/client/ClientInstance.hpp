@@ -22,6 +22,7 @@ public:
     );
 
     std::string getScreenName() {
+        // Virtual index for ClientInstance::getScreenName on current supported Bedrock runtime.
         constexpr size_t get_screen_name_index = 271;
         std::string screenName = "hud_screen";
         return Selaura::CallVirtual<std::string&, std::string&>(this, get_screen_name_index, screenName);

@@ -33,7 +33,10 @@ namespace {
         inputs[1].ki.wVk = VK_RETURN;
         inputs[1].ki.dwFlags = KEYEVENTF_KEYUP;
 
-        SendInput(2, inputs, sizeof(INPUT));
+        const UINT sent = SendInput(2, inputs, sizeof(INPUT));
+        if (sent != 2) {
+            std::println("[Selaura AutoRespawn] Failed to send respawn input.");
+        }
     }
 }
 
