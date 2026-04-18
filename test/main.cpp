@@ -19,6 +19,7 @@ BOOL APIENTRY DllMain(HINSTANCE, DWORD, LPVOID) {
 namespace {
     constexpr auto kAutoRespawnDelay = std::chrono::milliseconds(500);
 
+    // These callbacks run on the game hook thread in this runtime path.
     bool gRespawnPending = false;
     std::chrono::steady_clock::time_point gRespawnAt = {};
     Selaura::Runtime* gRuntime = nullptr;
